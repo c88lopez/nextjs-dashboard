@@ -1,8 +1,8 @@
-import bcrypt from 'bcrypt';
-import postgres from 'postgres';
-import { invoices, customers, revenue, users } from '../lib/placeholder-data';
+import bcrypt from "bcrypt";
+import postgres from "postgres";
+import { invoices, customers, revenue, users } from "../lib/placeholder-data";
 
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
 
 async function seedUsers() {
   // await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
@@ -15,7 +15,7 @@ async function seedUsers() {
     );
   `;
 
-  const insertedUsers = await Promise.all(
+  return Promise.all(
     users.map(async (user) => {
       const hashedPassword = await bcrypt.hash(user.password, 10);
       return sql`
@@ -25,8 +25,6 @@ async function seedUsers() {
       `;
     }),
   );
-
-  return insertedUsers;
 }
 
 async function seedInvoices() {
@@ -42,7 +40,7 @@ async function seedInvoices() {
     );
   `;
 
-  const insertedInvoices = await Promise.all(
+  return Promise.all(
     invoices.map(
       (invoice) => sql`
         INSERT INTO invoices (customer_id, amount, status, date)
@@ -51,8 +49,6 @@ async function seedInvoices() {
       `,
     ),
   );
-
-  return insertedInvoices;
 }
 
 async function seedCustomers() {
@@ -67,7 +63,7 @@ async function seedCustomers() {
     );
   `;
 
-  const insertedCustomers = await Promise.all(
+  return Promise.all(
     customers.map(
       (customer) => sql`
         INSERT INTO customers (id, name, email, image_url)
@@ -76,8 +72,6 @@ async function seedCustomers() {
       `,
     ),
   );
-
-  return insertedCustomers;
 }
 
 async function seedRevenue() {
@@ -88,7 +82,7 @@ async function seedRevenue() {
     );
   `;
 
-  const insertedRevenue = await Promise.all(
+  return Promise.all(
     revenue.map(
       (rev) => sql`
         INSERT INTO revenue (month, revenue)
@@ -97,20 +91,18 @@ async function seedRevenue() {
       `,
     ),
   );
-
-  return insertedRevenue;
 }
 
 export async function GET() {
   try {
-    const result = await sql.begin((sql) => [
+    await sql.begin(() => [
       seedUsers(),
       seedCustomers(),
       seedInvoices(),
       seedRevenue(),
     ]);
 
-    return Response.json({ message: 'Database seeded successfully' });
+    return Response.json({ message: "Database seeded successfully" });
   } catch (error) {
     return Response.json({ error }, { status: 500 });
   }
